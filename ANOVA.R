@@ -36,12 +36,24 @@ summary(area.aov)
 
 # correlation plot
 library(corrplot)
-SLM_plot<-cor(SLM)
+corr_SLM<-data.frame(SLM$Area,SLM$Ellipticity..oblate.,SLM$Ellipticity..prolate,SLM$Intensity.Max,SLM$Intensity.Mean,SLM$Intensity.Median
+       ,SLM$Intensity.Min,SLM$Intensity.StdDev,SLM$Intensity.Sum,SLM$Number.of.Vertices,SLM$Sphericity,SLM$Volume)
+
+corr_SP_B<-data.frame(SP_PO_B$Area,SP_PO_B$Ellipticity..oblate.,SP_PO_B$Ellipticity..prolate,SP_PO_B$Intensity.Max,SP_PO_B$Intensity.Mean,SP_PO_B$Intensity.Median
+                     ,SP_PO_B$Intensity.Min,SP_PO_B$Intensity.StdDev,SP_PO_B$Intensity.Sum,SP_PO_B$Number.of.Vertices,SP_PO_B$Sphericity,SP_PO_B$Volume)
+
+corr_SLM_AD<-data.frame(SLM_AD$Area,SLM_AD$Ellipticity..oblate.,SLM_AD$Ellipticity..prolate,SLM_AD$Intensity.Max,SLM_AD$Intensity.Mean,SLM_AD$Intensity.Median
+                     ,SLM_AD$Intensity.Min,SLM_AD$Intensity.StdDev,SLM_AD$Intensity.Sum,SLM_AD$Number.of.Vertices,SLM_AD$Sphericity,SLM_AD$Volume)
+
+
+SLM_plot<-cor(corr_SLM)
+SLM_AD_plot<-cor(corr_SLM_AD)
 SP_PO_A_plot<-cor(SP_PO_A)
-SP_PO_B_plot<-cor(SP_PO_B)
+SP_PO_B_plot<-cor(corr_SP_B)
 SR_plot<-cor(SR)
 dev_plot<-cor(dev)
 corrplot(SLM_plot, method="color")
+corrplot(SLM_AD_plot, method="color")
 corrplot(SP_PO_A_plot, method="color")
 corrplot(SP_PO_B_plot, method="color")
 corrplot(SR_plot, method="color")
@@ -125,3 +137,19 @@ print(train)
 summary(train_pca)
 biplot(train_pca, xlabs = rep("", nrow(train)))
 summary(train)
+
+# ABC
+library(ABCoptim)
+k <- 4
+n <- 40
+#model_AD <- data.frame(SLM_AD$Area,SLM_AD$Ellipticity..oblate.,SLM_AD$Sphericity,SLM_AD$Volume)
+#model <- data.frame(SLM$Area,SLM$Ellipticity..oblate.,SLM$Sphericity,SLM$Volume)
+w <-  matrix(SLM_AD$Intensity.Mean, ncol = 1, nrow = 40)    # This are the model parameters
+X <- matrix(dev$Area, ncol = k, nrow = n) # This are the controls
+y <- X %*% w   
+# Objective function
+fun <- function(x) {
+  sum((y - X%*%x)^2)
+}
+ans <- abc_optim(rep(0,k), fun, lb = -10000, ub=10000)
+coef(lm(y~0+X))
