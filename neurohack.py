@@ -11,6 +11,7 @@ from sklearn import svm, tree
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score, train_test_split
+import torch
 
 data = []
 pos_int = {'SLM Distal apical dendrites':0,
@@ -32,10 +33,10 @@ if sys.argv[1]=="load":
     min_ex = 3506
 elif sys.argv[1]=="train":
     for folder in list(os.walk("../Data/"))[0][1]:
-        xls = xlrd.open_workbook("../Data/"+folder+"/AD.xlsx", on_demand=True)
+        xls = xlrd.open_workbook("../Data/"+folder+"/WT.xlsx", on_demand=True)
         sheets = xls.sheet_names()
         for idx,_ in enumerate(sheets):
-            df = pd.read_excel("../Data/"+folder+"/AD.xlsx", sheet_name=idx, skiprows=[0])
+            df = pd.read_excel("../Data/"+folder+"/WT.xlsx", sheet_name=idx, skiprows=[0])
             values.append(df["Value"][0])
             '''
             df = df[['Area', 'Distance from Origin', 'Distance to Image Border XY',
@@ -45,10 +46,13 @@ elif sys.argv[1]=="train":
                 'Position Y', 'Position Z', 'Sphericity', 'Volume']]
             '''
             # '''
-            df = df[['Area', 
+            try:
+                df = df[['Area', 
                 'Ellipticity (oblate)', 'Ellipticity (prolate)', 'Intensity Max',
                 'Intensity Mean', 'Intensity Median', 'Intensity Min',
                 'Intensity StdDev', 'Intensity Sum', 'Number of Vertices', 'Sphericity', 'Volume']]
+            except:
+                pdb.set_trace()
             # '''
             data.append(df)
             positions.append(pos_int[folder])
@@ -57,6 +61,7 @@ elif sys.argv[1]=="train":
     for val,pos in zip(values,positions):
         num_examples_in_class[pos] += val
     min_ex = min(num_examples_in_class)
+    pdb.set_trace()
 
     X,Y = [],[]
     for df,pos in zip(data,positions):
@@ -118,3 +123,7 @@ for file_name,arr in zip(["X_train","X_test"],[X_train,X_test]):
         writer.writerows(arr)
 pdb.set_trace()
 '''
+
+class Feedforward(torch.nn.Module):
+    def __init__(self):
+        
